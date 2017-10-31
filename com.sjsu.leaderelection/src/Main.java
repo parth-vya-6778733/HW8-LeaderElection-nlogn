@@ -17,7 +17,7 @@ public class Main {
      * asks user for selecting a root value to initiate the program
      * @param args
      */
-    public static void main ( String args[]){
+    public static void main ( String args[])throws InterruptedException{
         Processor p0 = new Processor(1);
         Processor p1 = new Processor(44);
         Processor p2 = new Processor(12);
@@ -56,6 +56,13 @@ public class Main {
         e3.start();
         e4.start();
         e5.start();
+
+        e0.join();
+        e1.join();
+        e2.join();
+        e3.join();
+        e4.join();
+        e5.join();
 
 
 

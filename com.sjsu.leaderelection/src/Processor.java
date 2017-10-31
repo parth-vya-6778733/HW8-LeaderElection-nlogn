@@ -64,27 +64,19 @@ public class Processor implements Observer {
             Message m = (Message) arg;
             System.out.println("This Processor id: " + this.id);
             System.out.println("Message Received: " + m.getId());
+            System.out.println("Message Type: " + m.getMessage());
             String message = m.getMessage();
             int mId = m.getId();
             int hops = m.getHops();
             int phase = m.getPhase();
 
-            if (!message.equals("terminate")) {
+
 
                 if(message.equals("probe"))
                 {
                     if(mId == this.left.id)
                     {
-                        if(mId == this.id)
-                        {
-                            System.out.println("Leader has been selected, sending terminate messages.");
-                            this.currentLeader = this.id;
-                            Message term = new Message();
-                            term.setMessage("terminate");
-                            left.sendMessgeToMyBuffer(term);
-                            // begin sending terminating message to all nodes
-                        }
-                        else if((mId > this.id) && (hops < Math.pow(2,phase)))
+                        if((mId > this.id) && (hops < Math.pow(2,phase)))
                         {
                             Message lprobe = new Message(mId,"probe",phase,hops+1);
                             left.sendMessgeToMyBuffer(lprobe);
@@ -99,31 +91,25 @@ public class Processor implements Observer {
                             //swallow
                         }
                     }
-                    else if(mId == this.right.id)
-                    {
-                        if(mId == this.id)
-                        {
-                            System.out.println("Leader has been selected, sending terminate messages.");
-                            this.currentLeader = this.id;
-                            Message term = new Message();
-                            term.setMessage("terminate");
-                            left.sendMessgeToMyBuffer(term);
-                            // begin sending terminating message to all nodes
-                        }
-                        else if((mId > this.id) && (hops < Math.pow(2,phase)))
-                        {
-                            Message rprobe = new Message(mId,"probe",phase,hops+1);
+                    else if(mId == this.right.id) {
+
+                        if ((mId > this.id) && (hops < Math.pow(2, phase))) {
+                            Message rprobe = new Message(mId, "probe", phase, hops + 1);
                             right.sendMessgeToMyBuffer(rprobe);
-                        }
-                        else if((mId > this.id) && (hops >= Math.pow(2,phase)))
-                        {
-                            Message rprobe = new Message(mId,"reply",phase,hops);
+                        } else if ((mId > this.id) && (hops >= Math.pow(2, phase))) {
+                            Message rprobe = new Message(mId, "reply", phase, hops);
                             right.sendMessgeToMyBuffer(rprobe);
-                        }
-                        else
-                        {
+                        } else {
                             //swallow
                         }
+                    }
+                    else if(mId == this.id)
+                    {
+                        System.out.println("Leader has been selected, sending terminate messages.");
+                        Message term = new Message(mId,"terminate");
+                        left.sendMessgeToMyBuffer(term);
+                        right.sendMessgeToMyBuffer(term);
+                        // begin sending terminating message to all nodes
                     }
                 }
                 else if(message.equals("reply"))
@@ -155,11 +141,18 @@ public class Processor implements Observer {
                         }
                     }
                 }
-            } else {
-                System.out.println("Terminate Message Received by Leader: " + this.id);
-                System.out.println("Leader is: " + this.currentLeader);
+                else if(message.equals("terminate"))
+                {
+                    if(this.id == mId)
+                    {
+                        System.out.println("Terminate Message Received by Leader: " + this.id);
+                    }
+                    else
+                    {
+                        right.sendMessgeToMyBuffer(m);
 
-            }
+                    }
+                }
 
 
 

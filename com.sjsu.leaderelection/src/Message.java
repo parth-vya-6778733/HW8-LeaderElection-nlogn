@@ -7,14 +7,14 @@ public class  Message {
     private int hops;
     private String message;
 
-    public Message() {
-        this.message = "";
+    public Message(int id, String message) {
+        this.id = id;this.message = message;
     }
 
     public Message(int id, String message, int phase, int hops)
     {
         this.id = id;
-        this.message = "";
+        this.message = message;
     }
 
     public int getId() {
