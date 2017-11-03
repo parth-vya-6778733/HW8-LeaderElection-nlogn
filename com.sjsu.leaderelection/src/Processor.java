@@ -11,13 +11,15 @@ import java.util.Observer;
  * a parent process if itself is not root, and a neighbor pj which may
  * or may not be the parent, but sends the message to this processor.
  */
-public class Processor implements Observer {
+public class Processor extends Thread implements Observer {
     //Each processsor has a message Buffer to store messages
     Buffer messageBuffer ;
     Integer id ;
     Integer currentLeader;
     public Processor right;
     public Processor left;
+    Integer totalProcessors = 6;
+    boolean phaseWinnerFlag = false;
    //private static final Object lockObject = new Object();
 
 
@@ -71,88 +73,96 @@ public class Processor implements Observer {
             int phase = m.getPhase();
 
 
-
-                if(message.equals("probe"))
-                {
+            switch(message) {
+                case "probe":
+                    if(mId == this.id)
+                    {
+                        this.left.sendMessgeToMyBuffer(new Message(this.id,"terminate",phase,hops));
+                        this.right.sendMessgeToMyBuffer(new Message(this.id,"terminate",phase,hops));
+                        //send terminate message, last phase
+                    }
                     if(mId == this.left.id)
                     {
                         if((mId > this.id) && (hops < Math.pow(2,phase)))
                         {
-                            Message lprobe = new Message(mId,"probe",phase,hops+1);
-                            left.sendMessgeToMyBuffer(lprobe);
+                            left.sendMessgeToMyBuffer(new Message(mId,"probe",phase,hops+1));
                         }
                         else if((mId > this.id) && (hops >= Math.pow(2,phase)))
                         {
-                            Message lprobe = new Message(mId,"reply",phase,hops);
-                            left.sendMessgeToMyBuffer(lprobe);
-                        }
-                        else
-                        {
-                            //swallow
+                            right.sendMessgeToMyBuffer(new Message(mId,"reply",phase,hops));
                         }
                     }
-                    else if(mId == this.right.id) {
+                    if(mId == this.right.id)
+                    {
+                        if((mId > this.id) && (hops < Math.pow(2,phase)))
+                        {
+                            right.sendMessgeToMyBuffer(new Message(mId,"probe",phase,hops+1));
+                        }
+                        else if((mId > this.id) && (hops >= Math.pow(2,phase)))
+                        {
+                            left.sendMessgeToMyBuffer(new Message(mId,"reply",phase,hops));
+                        }
+                    }
 
-                        if ((mId > this.id) && (hops < Math.pow(2, phase))) {
-                            Message rprobe = new Message(mId, "probe", phase, hops + 1);
-                            right.sendMessgeToMyBuffer(rprobe);
-                        } else if ((mId > this.id) && (hops >= Math.pow(2, phase))) {
-                            Message rprobe = new Message(mId, "reply", phase, hops);
-                            right.sendMessgeToMyBuffer(rprobe);
-                        } else {
-                            //swallow
-                        }
-                    }
-                    else if(mId == this.id)
+                    break;
+                case "reply":
+                    if (mId != this.id)
                     {
-                        System.out.println("Leader has been selected, sending terminate messages.");
-                        Message term = new Message(mId,"terminate");
-                        left.sendMessgeToMyBuffer(term);
-                        right.sendMessgeToMyBuffer(term);
-                        // begin sending terminating message to all nodes
-                    }
-                }
-                else if(message.equals("reply"))
-                {
-                    if(mId == this.left.id)
-                    {
-                        if(mId == this.id)
+                        if(mId == this.left.id)
                         {
-                            System.out.println("Entering next phase with: " + this.id);
-                            Message lprobe = new Message(mId,"probe",phase+1,1);
-                            left.sendMessgeToMyBuffer(lprobe);
+                            this.left.sendMessgeToMyBuffer(new Message(mId,"reply",phase,hops));
                         }
-                        else
+                        else if(mId == this.right.id)
                         {
-                            right.sendMessgeToMyBuffer(m);
+                            this.right.sendMessgeToMyBuffer(new Message(mId,"reply",phase,hops));
                         }
-                    }
-                    else if(mId == this.right.id)
-                    {
-                        if(mId == this.id)
-                        {
-                            System.out.println("Entering next phase with: " + this.id);
-                            Message rprobe = new Message(mId,"probe",phase+1,1);
-                            right.sendMessgeToMyBuffer(rprobe);
-                        }
-                        else
-                        {
-                            left.sendMessgeToMyBuffer(m);
-                        }
-                    }
-                }
-                else if(message.equals("terminate"))
-                {
-                    if(this.id == mId)
-                    {
-                        System.out.println("Terminate Message Received by Leader: " + this.id);
+
                     }
                     else
                     {
-                        right.sendMessgeToMyBuffer(m);
-
+                        if(mId == this.right.id || mId == this.left.id)
+                        {
+                            this.phaseWinnerFlag = true;
+                        }
+                        if(phaseWinnerFlag)
+                        {
+                            if(mId == this.left.id)
+                            {
+                                this.left.sendMessgeToMyBuffer(new Message(mId,"probe",phase+1,hops));
+                            }
+                            else if(mId == this.right.id)
+                            {
+                                this.right.sendMessgeToMyBuffer(new Message(mId,"probe",phase+1,hops));
+                            }
+                            this.phaseWinnerFlag = false;
+                        }
                     }
-                }
+
+                    break;
+                case "terminate":
+                    if (this.id == mId) {
+                        System.out.println("Terminate Message Received by Leader: " + this.id);
+                    } else if(mId == this.right.id){
+                        right.sendMessgeToMyBuffer(m);
+                    }else if(mId == this.left.id){
+                        left.sendMessgeToMyBuffer(m);
+                    }
+
+
+            }
+
+
+    }
+
+    @Override
+    public void run() {
+        Message probe = new Message(this.id,"probe",0,1);
+        System.out.println("Running Thread: " + this.id);
+
+            this.right.sendMessgeToMyBuffer(probe);
+            this.left.sendMessgeToMyBuffer(probe);
+
+
 
 
 

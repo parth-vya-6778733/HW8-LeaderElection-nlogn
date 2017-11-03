@@ -12,18 +12,25 @@ import java.util.concurrent.*;
  */
 public class Main {
 
-
+    Processor p0,p1,p2,p3,p4,p5;
     /**
      * asks user for selecting a root value to initiate the program
      * @param args
      */
     public static void main ( String args[])throws InterruptedException{
-        Processor p0 = new Processor(1);
-        Processor p1 = new Processor(44);
-        Processor p2 = new Processor(12);
-        Processor p3 = new Processor(10);
-        Processor p4 = new Processor(50);
-        Processor p5 = new Processor(33);
+    Main m = new Main();
+    m.init();
+    m.execute();
+    }
+
+    public void init()
+    {
+        p0 = new Processor(1);
+        p1 = new Processor(44);
+        p2 = new Processor(12);
+        p3 = new Processor(10);
+        p4 = new Processor(50);
+        p5 = new Processor(33);
 
         p0.setRight(p1);
         p0.setLeft(p5);
@@ -42,61 +49,26 @@ public class Main {
 
         p5.setRight(p0);
         p5.setLeft(p4);
-
-        Executor e0 = new Executor(p0);
-        Executor e1 = new Executor(p1);
-        Executor e2 = new Executor(p2);
-        Executor e3 = new Executor(p3);
-        Executor e4 = new Executor(p4);
-        Executor e5 = new Executor(p5);
-
-        e0.start();
-        e1.start();
-        e2.start();
-        e3.start();
-        e4.start();
-        e5.start();
-
-        e0.join();
-        e1.join();
-        e2.join();
-        e3.join();
-        e4.join();
-        e5.join();
-
-
-
     }
 
-
-}
-
-class Executor extends Thread
-{
-    Processor p;
-
-    public Executor(Processor p)
+    public void execute() throws InterruptedException
     {
-        this.p = p;
+        p0.start();
+        p1.start();
+        p2.start();
+        p3.start();
+        p4.start();
+        p5.start();
+
+        p0.join();
+        p1.join();
+        p2.join();
+        p3.join();
+        p4.join();
+        p5.join();
     }
 
-    @Override
-    public void run() {
-        Message probe = new Message(p.id,"probe",0,1);
-        System.out.println("Running Thread: " + p.id);
-        try {
-        Thread.sleep(2000);
-        this.p.right.sendMessgeToMyBuffer(probe);
-        this.p.left.sendMessgeToMyBuffer(probe);
 
 
-
-
-            //System.out.println("Running Thread: " + p.id);
-            System.out.println("--------------------------------------------------------");
-        }catch(InterruptedException e)
-        {
-            System.out.println(e);
-        }
-    }
 }
+
